@@ -5,12 +5,12 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-// API Expiry (6 April 2027)
+// API Expiry
 $expiryDate = strtotime('2027-04-06');
 $currentDate = time();
 
 if ($currentDate > $expiryDate) {
-    echo json_encode(["success" => false, "message" => "API Expired! Contact @AbdulDevStoreBot for renewal"]);
+    echo json_encode(["success" => false, "message" => "API Expired! Contact @AbdulDevStoreBot"]);
     exit;
 }
 
@@ -26,8 +26,7 @@ if (!$term) {
         "success" => false,
         "message" => "Provide ?mobile= or ?term=",
         "credit" => "@botadminshere",
-        "channel" => "https://t.me/Toxicadminn",
-        "days_remaining" => $remainingDays
+        "channel" => "https://t.me/Toxicadminn"
     ]);
     exit;
 }
@@ -41,21 +40,25 @@ curl_setopt_array($ch, [
     CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_TIMEOUT => 45,
-    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; ToxicNumberAPI/3.0)'
+    CURLOPT_TIMEOUT => 60,                    // increased
+    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; NumberSageAPI/3.1)'
 ]);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 curl_close($ch);
 
 if ($response === false || $httpCode !== 200) {
     echo json_encode([
         "success" => false,
-        "message" => "API request failed",
+        "message" => "Backend API Down (502 Bad Gateway)",
         "http_code" => $httpCode,
+        "curl_error" => $curlError,
+        "note" => "Backend temporarily down. Try again in few minutes or contact owner.",
         "credit" => "@botadminshere",
-        "channel" => "https://t.me/Toxicadminn"
+        "channel" => "https://t.me/Toxicadminn",
+        "days_remaining" => $remainingDays
     ]);
     exit;
 }
@@ -66,7 +69,7 @@ $output = [
     "success" => true,
     "credit" => "@botadminshere",
     "channel" => "https://t.me/Toxicadminn",
-    "api" => "toxic-number-api.vercel.app",
+    "api" => "number-sage-eta.vercel.app",
     "source" => "pawan",
     "days_remaining" => $remainingDays,
     "result" => $data['data'] ?? $data ?? []
