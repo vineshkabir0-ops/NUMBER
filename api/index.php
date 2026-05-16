@@ -52,7 +52,7 @@ curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_SSL_VERIFYPEER => false,
     CURLOPT_TIMEOUT => 90,
-    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SupportToxicAPI/4.2)'
+    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SupportToxicAPI/4.3)'
 ]);
 
 $response = curl_exec($ch);
@@ -74,6 +74,13 @@ if ($response === false || $httpCode !== 200) {
 }
 
 $data = json_decode($response, true);
+
+// Remove unwanted tag
+if (isset($data['data']) && is_array($data['data'])) {
+    unset($data['data']['tag']);
+} elseif (isset($data['tag'])) {
+    unset($data['tag']);
+}
 
 $output = [
     "success" => true,
