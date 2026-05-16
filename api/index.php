@@ -5,122 +5,84 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-// API expiry
+// API Expiry
 $expiryDate = strtotime('2027-04-06');
 $currentDate = time();
 
 if ($currentDate > $expiryDate) {
     echo json_encode([
-        "success" => false,
-        "message" => "API Expired! Contact admin for renewal",
-        "credit" => "@botadminshere",
-        "channel" => "https://t.me/Toxicadminn"
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        "success" => false, 
+        "message" => "API Expired! Contact @botadminshere for renewal"
+    ]);
     exit;
 }
 
 $remainingDays = floor(($expiryDate - $currentDate) / 86400);
 
-// New API
-define('MOBILE_API_URL', 'https://users-xinfo-admin-six.vercel.app/api');
+// ==================== API CONFIG ====================
+$apiBaseUrl = "https://users-xinfo-admin-six.vercel.app/api";
+$apiKey = "qwertyuioplk847isuhnsiandj";
+// ===================================================
 
-// Put your API key here
-$apiKey = "YOUR_API_KEY_HERE";
-
-// Get mobile number
-$term = $_GET['term'] ?? null;
+$term = $_GET['term'] ?? $_GET['mobile'] ?? $_GET['number'] ?? null;
 
 if (!$term) {
     echo json_encode([
         "success" => false,
-        "message" => "Please provide mobile number using ?term=NUMBER",
-        "example" => "?term=9876543210",
+        "message" => "Provide ?mobile=6203522947",
         "credit" => "@botadminshere",
         "channel" => "https://t.me/Toxicadminn",
-        "api_valid_until" => "April 6, 2027",
         "days_remaining" => $remainingDays
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    ]);
     exit;
 }
 
-// Sanitize number
-$term = preg_replace('/[^0-9]/', '', $term);
+$number = preg_replace('/[^0-9]/', '', $term);
 
-if (strlen($term) < 10) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Invalid mobile number",
-        "credit" => "@botadminshere",
-        "channel" => "https://t.me/Toxicadminn",
-        "api_valid_until" => "April 6, 2027",
-        "days_remaining" => $remainingDays
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-// Build API URL
-$apiUrl = MOBILE_API_URL . "?" . http_build_query([
-    "key" => $apiKey,
+// Clean URL
+$apiUrl = $apiBaseUrl . "?" . http_build_query([
+    "key"  => $apiKey,
     "type" => "mobile",
-    "term" => $term
+    "term" => $number
 ]);
 
 $ch = curl_init();
-
 curl_setopt_array($ch, [
     CURLOPT_URL => $apiUrl,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_USERAGENT => 'Mozilla/5.0'
+    CURLOPT_TIMEOUT => 90,
+    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SupportToxicAPI/4.2)'
 ]);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$error = curl_error($ch);
-
+$curlError = curl_error($ch);
 curl_close($ch);
 
 if ($response === false || $httpCode !== 200) {
     echo json_encode([
         "success" => false,
-        "message" => "Failed to fetch data",
-        "error" => $error ?: "HTTP Code: " . $httpCode,
+        "message" => "Backend Down (502 Bad Gateway)",
+        "note" => "XINFO server down hai. @botadminshere ko bol do fix kare.",
+        "http_code" => $httpCode,
         "credit" => "@botadminshere",
         "channel" => "https://t.me/Toxicadminn",
-        "api_valid_until" => "April 6, 2027",
         "days_remaining" => $remainingDays
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    ]);
     exit;
 }
 
 $data = json_decode($response, true);
 
-if (!$data) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Invalid API response",
-        "raw_response" => $response,
-        "credit" => "@botadminshere",
-        "channel" => "https://t.me/Toxicadminn",
-        "api_valid_until" => "April 6, 2027",
-        "days_remaining" => $remainingDays
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-// Final output
 $output = [
     "success" => true,
     "credit" => "@botadminshere",
     "channel" => "https://t.me/Toxicadminn",
-    "api_valid_until" => "April 6, 2027",
+    "api" => "support-toxicadminn.vercel.app",
+    "source" => "pawan",
     "days_remaining" => $remainingDays,
-    "query" => [
-        "type" => "mobile",
-        "term" => $term
-    ],
-    "result" => $data
+    "result" => $data['data'] ?? $data ?? []
 ];
 
 echo json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
