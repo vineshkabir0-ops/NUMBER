@@ -19,12 +19,12 @@ $remainingDays = floor(($expiryDate - $currentDate) / 86400);
 define('XINFO_API_URL', 'https://users-xinfo-admin-six.vercel.app/api');
 define('XINFO_API_KEY', 'qwertyuioplk847isuhnsiandj');
 
-$term = $_GET['term'] ?? $_GET['mobile'] ?? null;
+$term = $_GET['term'] ?? $_GET['mobile'] ?? $_GET['number'] ?? null;
 
 if (!$term) {
     echo json_encode([
         "success" => false,
-        "message" => "Provide ?mobile= or ?term=",
+        "message" => "Provide ?mobile=6203522947",
         "credit" => "@botadminshere",
         "channel" => "https://t.me/Toxicadminn"
     ]);
@@ -40,8 +40,8 @@ curl_setopt_array($ch, [
     CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_TIMEOUT => 60,                    // increased
-    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; NumberSageAPI/3.1)'
+    CURLOPT_TIMEOUT => 90,
+    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; NumberOmegaAPI/3.3)'
 ]);
 
 $response = curl_exec($ch);
@@ -52,10 +52,9 @@ curl_close($ch);
 if ($response === false || $httpCode !== 200) {
     echo json_encode([
         "success" => false,
-        "message" => "Backend API Down (502 Bad Gateway)",
+        "message" => "Backend Down (502)",
+        "note" => "Owner ko bol do server restart kare. Ya naya API link de.",
         "http_code" => $httpCode,
-        "curl_error" => $curlError,
-        "note" => "Backend temporarily down. Try again in few minutes or contact owner.",
         "credit" => "@botadminshere",
         "channel" => "https://t.me/Toxicadminn",
         "days_remaining" => $remainingDays
@@ -63,13 +62,14 @@ if ($response === false || $httpCode !== 200) {
     exit;
 }
 
+// Working response
 $data = json_decode($response, true);
 
 $output = [
     "success" => true,
     "credit" => "@botadminshere",
     "channel" => "https://t.me/Toxicadminn",
-    "api" => "number-sage-eta.vercel.app",
+    "api" => "number-omega-ecru.vercel.app",
     "source" => "pawan",
     "days_remaining" => $remainingDays,
     "result" => $data['data'] ?? $data ?? []
