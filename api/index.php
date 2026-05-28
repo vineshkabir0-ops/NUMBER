@@ -5,92 +5,135 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-// API Expiry
-$expiryDate = strtotime('2027-04-06');
+// ======================
+// API SETTINGS
+// ======================
+
+define('API_KEY', 'toxicadminn');
+define('API_URL', 'https://numosintapi.vercel.app/api/number-info');
+
+// ======================
+// API EXPIRY
+// ======================
+
+$expiryDate = strtotime('2026-12-31');
 $currentDate = time();
 
 if ($currentDate > $expiryDate) {
     echo json_encode([
-        "success" => false, 
-        "message" => "API Expired! Contact @botadminshere for renewal"
-    ]);
+        "success" => false,
+        "message" => "API Expired! Contact Developer",
+        "developer" => "https://t.me/botadminshere",
+        "credit" => "https://t.me/Toxicadminn",
+        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-$remainingDays = floor(($expiryDate - $currentDate) / 86400);
+// ======================
+// API KEY CHECK
+// ======================
 
-// ==================== API CONFIG ====================
-$apiBaseUrl = "https://users-xinfo-admin-six.vercel.app/api";
-$apiKey = "qwertyuioplk847isuhnsiandj";
-// ===================================================
+$apikey = $_GET['apikey'] ?? '';
 
-$term = $_GET['term'] ?? $_GET['mobile'] ?? $_GET['number'] ?? null;
-
-if (!$term) {
+if ($apikey !== API_KEY) {
     echo json_encode([
         "success" => false,
-        "message" => "Provide ?mobile=6203522947",
-        "credit" => "@botadminshere",
-        "channel" => "https://t.me/Toxicadminn",
-        "days_remaining" => $remainingDays
-    ]);
+        "message" => "Invalid API Key",
+        "developer" => "https://t.me/botadminshere",
+        "credit" => "https://t.me/Toxicadminn",
+        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-$number = preg_replace('/[^0-9]/', '', $term);
+// ======================
+// NUMBER CHECK
+// ======================
 
-// Clean URL
-$apiUrl = $apiBaseUrl . "?" . http_build_query([
-    "key"  => $apiKey,
-    "type" => "mobile",
-    "term" => $number
-]);
+$number = $_GET['number'] ?? '';
+
+if (empty($number)) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Please provide a number",
+        "developer" => "https://t.me/botadminshere",
+        "credit" => "https://t.me/Toxicadminn",
+        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// sanitize number
+$number = preg_replace('/[^0-9]/', '', $number);
+
+// ======================
+// FETCH API
+// ======================
+
+$url = API_URL . "?number=" . urlencode($number);
 
 $ch = curl_init();
+
 curl_setopt_array($ch, [
-    CURLOPT_URL => $apiUrl,
+    CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_TIMEOUT => 90,
-    CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; SupportToxicAPI/4.3)'
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_USERAGENT => 'Mozilla/5.0'
 ]);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
+
 curl_close($ch);
+
+// ======================
+// ERROR CHECK
+// ======================
 
 if ($response === false || $httpCode !== 200) {
     echo json_encode([
         "success" => false,
-        "message" => "Backend Down (502 Bad Gateway)",
-        "note" => "XINFO server down hai. @botadminshere ko bol do fix kare.",
-        "http_code" => $httpCode,
-        "credit" => "@botadminshere",
-        "channel" => "https://t.me/Toxicadminn",
-        "days_remaining" => $remainingDays
-    ]);
+        "message" => "Failed to fetch data",
+        "developer" => "https://t.me/botadminshere",
+        "credit" => "https://t.me/Toxicadminn",
+        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 $data = json_decode($response, true);
 
-// Remove unwanted tag
-if (isset($data['data']) && is_array($data['data'])) {
-    unset($data['data']['tag']);
-} elseif (isset($data['tag'])) {
-    unset($data['tag']);
+if (!$data) {
+    echo json_encode([
+        "success" => false,
+        "message" => "No data found",
+        "developer" => "https://t.me/botadminshere",
+        "credit" => "https://t.me/Toxicadminn",
+        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
 }
+
+// ======================
+// HIDE CHANNEL
+// ======================
+
+unset($data['channel']);
+
+// ======================
+// FINAL OUTPUT
+// ======================
 
 $output = [
     "success" => true,
-    "credit" => "@botadminshere",
-    "channel" => "https://t.me/Toxicadminn",
-    "api" => "support-toxicadminn.vercel.app",
-    "source" => "pawan",
-    "days_remaining" => $remainingDays,
-    "result" => $data['data'] ?? $data ?? []
+    "developer" => "https://t.me/botadminshere",
+    "credit" => "https://t.me/Toxicadminn",
+    "private" => "https://t.me/+14rDlunTEzwwZGY1",
+    "result" => $data
 ];
 
 echo json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
 ?>
