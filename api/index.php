@@ -9,23 +9,20 @@ header('Access-Control-Allow-Origin: *');
 // API SETTINGS
 // ======================
 
-define('API_KEY', 'toxicadminn');
-define('API_URL', 'https://numosintapi.vercel.app/api/number-info');
+define('API_KEY', 'toxicadminn'); // Your API key
+define('API_URL', 'https://paidxapi-number-info.devilxapis.workers.dev/');
+define('REMOTE_API_KEY', 'dependonrequest');
 
 // ======================
 // API EXPIRY
 // ======================
 
 $expiryDate = strtotime('2026-12-31');
-$currentDate = time();
 
-if ($currentDate > $expiryDate) {
+if (time() > $expiryDate) {
     echo json_encode([
         "success" => false,
-        "message" => "API Expired! Contact Developer",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "API Expired! Contact Developer"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
@@ -39,10 +36,7 @@ $apikey = $_GET['apikey'] ?? '';
 if ($apikey !== API_KEY) {
     echo json_encode([
         "success" => false,
-        "message" => "Invalid API Key",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Invalid API Key"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
@@ -56,31 +50,30 @@ $number = $_GET['number'] ?? '';
 if (empty($number)) {
     echo json_encode([
         "success" => false,
-        "message" => "Please provide a number",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Please provide a number"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// sanitize number
-$number = preg_replace('/[^0-9]/', '', $number);
+// Sanitize Number
+$number = preg_replace('/\D/', '', $number);
 
 // ======================
 // FETCH API
 // ======================
 
-$url = API_URL . "?number=" . urlencode($number);
+$url = API_URL .
+       '?key=' . urlencode(REMOTE_API_KEY) .
+       '&phone=' . urlencode($number);
 
 $ch = curl_init();
 
 curl_setopt_array($ch, [
-    CURLOPT_URL => $url,
+    CURLOPT_URL            => $url,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_USERAGENT => 'Mozilla/5.0'
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_TIMEOUT        => 30,
+    CURLOPT_USERAGENT      => 'Mozilla/5.0'
 ]);
 
 $response = curl_exec($ch);
@@ -95,10 +88,7 @@ curl_close($ch);
 if ($response === false || $httpCode !== 200) {
     echo json_encode([
         "success" => false,
-        "message" => "Failed to fetch data",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Failed to fetch data"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
@@ -108,32 +98,20 @@ $data = json_decode($response, true);
 if (!$data) {
     echo json_encode([
         "success" => false,
-        "message" => "No data found",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Invalid response from upstream API"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// ======================
-// HIDE CHANNEL
-// ======================
-
+// Hide channel field if present
 unset($data['channel']);
 
 // ======================
 // FINAL OUTPUT
 // ======================
 
-$output = [
+echo json_encode([
     "success" => true,
-    "developer" => "https://t.me/botadminshere",
-    "credit" => "https://t.me/Toxicadminn",
-    "private" => "https://t.me/+14rDlunTEzwwZGY1",
-    "result" => $data
-];
-
-echo json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
+    "result"  => $data
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 ?>
