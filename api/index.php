@@ -19,11 +19,10 @@ define('API_URL', 'https://number-to-api-team-only.vercel.app/api/index.js?api_k
 $apikey = $_GET['apikey'] ?? '';
 
 if ($apikey !== API_KEY) {
-    echo json_encode([
+    die(json_encode([
         "success" => false,
         "message" => "Invalid API Key"
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
 // ======================
@@ -33,16 +32,15 @@ if ($apikey !== API_KEY) {
 $query = $_GET['query'] ?? '';
 
 if (empty($query)) {
-    echo json_encode([
+    die(json_encode([
         "success" => false,
         "message" => "Please provide query",
         "example" => "?apikey=toxicadminn&query=9876543210"
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
-// sanitize query
-$query = preg_replace('/[^0-9]/', '', $query);
+// Only numbers
+$query = preg_replace('/\D/', '', $query);
 
 // ======================
 // TARGET API URL
@@ -57,16 +55,17 @@ $url = API_URL . urlencode($query);
 $ch = curl_init();
 
 curl_setopt_array($ch, [
-    CURLOPT_URL => $url,
+    CURLOPT_URL            => $url,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_TIMEOUT => 30,
     CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_USERAGENT => 'Mozilla/5.0'
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_TIMEOUT        => 30,
+    CURLOPT_USERAGENT      => 'Mozilla/5.0'
 ]);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 
 curl_close($ch);
 
@@ -74,12 +73,20 @@ curl_close($ch);
 // ERROR CHECK
 // ======================
 
-if ($response === false || $httpCode !== 200) {
-    echo json_encode([
+if ($response === false || !empty($curlError)) {
+    die(json_encode([
         "success" => false,
-        "message" => "Failed to fetch data"
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
+        "message" => "cURL Error",
+        "error"   => $curlError
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+
+if ($httpCode != 200) {
+    die(json_encode([
+        "success" => false,
+        "message" => "HTTP Error",
+        "status"  => $httpCode
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
 // ======================
@@ -88,16 +95,16 @@ if ($response === false || $httpCode !== 200) {
 
 $data = json_decode($response, true);
 
-if (!$data) {
-    echo json_encode([
+if (json_last_error() !== JSON_ERROR_NONE) {
+    die(json_encode([
         "success" => false,
-        "message" => "Invalid response from server"
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
+        "message" => "Invalid JSON Response",
+        "raw"     => $response
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
 // ======================
-// HIDE UNWANTED FIELDS
+// HIDE FIELDS
 // ======================
 
 unset($data['channel']);
@@ -113,6 +120,6 @@ unset($data['API_Developer']);
 
 echo json_encode([
     "success" => true,
-    "result" => $data
+    "result"  => $data
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 ?>
