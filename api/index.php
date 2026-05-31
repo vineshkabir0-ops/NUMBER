@@ -1,50 +1,67 @@
-```php
 <?php
 error_reporting(0);
+ini_set('display_errors', 0);
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
+// ======================
+// SETTINGS
+// ======================
+
 define('API_KEY', 'toxicadminn');
+define('API_URL', 'https://number-to-api-team-only.vercel.app/api/index.js?api_key=free6m&number=');
+
+// ======================
+// API KEY CHECK
+// ======================
 
 $apikey = $_GET['apikey'] ?? '';
 
 if ($apikey !== API_KEY) {
     echo json_encode([
         "success" => false,
-        "message" => "Invalid API Key",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Invalid API Key"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-$number = $_GET['number'] ?? '';
+// ======================
+// QUERY CHECK
+// ======================
 
-if (empty($number)) {
+$query = $_GET['query'] ?? '';
+
+if (empty($query)) {
     echo json_encode([
         "success" => false,
-        "message" => "Please provide number",
-        "example" => "?apikey=toxicadminn&number=9876543210",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Please provide query",
+        "example" => "?apikey=toxicadminn&query=9876543210"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-$number = preg_replace('/\D/', '', $number);
+// sanitize query
+$query = preg_replace('/[^0-9]/', '', $query);
 
-$url = "https://num-to-info.sauravsingh2111.workers.dev/lookup/" . urlencode($number);
+// ======================
+// TARGET API URL
+// ======================
+
+$url = API_URL . urlencode($query);
+
+// ======================
+// CURL REQUEST
+// ======================
 
 $ch = curl_init();
 
 curl_setopt_array($ch, [
     CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_TIMEOUT => 30,
     CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_FOLLOWLOCATION => true,
     CURLOPT_USERAGENT => 'Mozilla/5.0'
 ]);
 
@@ -53,49 +70,49 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
 curl_close($ch);
 
-if ($response === false || $httpCode != 200) {
+// ======================
+// ERROR CHECK
+// ======================
+
+if ($response === false || $httpCode !== 200) {
     echo json_encode([
         "success" => false,
-        "message" => "Failed to fetch data",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Failed to fetch data"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
+
+// ======================
+// DECODE RESPONSE
+// ======================
 
 $data = json_decode($response, true);
 
 if (!$data) {
     echo json_encode([
         "success" => false,
-        "message" => "Invalid response from server",
-        "developer" => "https://t.me/botadminshere",
-        "credit" => "https://t.me/Toxicadminn",
-        "private" => "https://t.me/+14rDlunTEzwwZGY1"
+        "message" => "Invalid response from server"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-/* Hide unwanted fields */
-unset($data['telegram']);
+// ======================
+// HIDE UNWANTED FIELDS
+// ======================
+
 unset($data['channel']);
-unset($data['developer']);
-unset($data['credit']);
-unset($data['private']);
+unset($data['key']);
+unset($data['api_key']);
+unset($data['owner']);
+unset($data['telegram']);
+unset($data['API_Developer']);
 
-if (isset($data['result']['telegram'])) {
-    unset($data['result']['telegram']);
-}
+// ======================
+// FINAL RESPONSE
+// ======================
 
-$output = [
+echo json_encode([
     "success" => true,
-    "developer" => "https://t.me/botadminshere",
-    "credit" => "https://t.me/Toxicadminn",
-    "private" => "https://t.me/+14rDlunTEzwwZGY1",
     "result" => $data
-];
-
-echo json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 ?>
-```
