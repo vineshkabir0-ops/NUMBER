@@ -78,6 +78,11 @@ if (!$data) {
     exit;
 }
 
+/* Hide developer field from API response */
+unset($data['developer']);
+unset($data['Developer']);
+unset($data['DEVELOPER']);
+
 echo json_encode([
     "success" => true,
     "developer" => "https://t.me/botadminshere",
