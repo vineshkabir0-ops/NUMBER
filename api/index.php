@@ -36,7 +36,8 @@ if (empty($number)) {
 
 $number = preg_replace('/\D/', '', $number);
 
-$url = "https://number-to-api-team-only.vercel.app/api/index.js?api_key=team6months&number=" . urlencode($number);
+/* New API */
+$url = "https://all-leak-check-api.vercel.app/api/search?query=91" . urlencode($number);
 
 $ch = curl_init();
 
@@ -78,10 +79,15 @@ if (!$data) {
     exit;
 }
 
-/* Hide developer field from API response */
-unset($data['developer']);
-unset($data['Developer']);
-unset($data['DEVELOPER']);
+/* Hide developer/website fields from API response */
+$hideFields = [
+    'developer', 'Developer', 'DEVELOPER',
+    'website', 'Website', 'WEBSITE'
+];
+
+foreach ($hideFields as $field) {
+    unset($data[$field]);
+}
 
 echo json_encode([
     "success" => true,
